@@ -10,6 +10,7 @@ Usage: Auto grap a series of WS cards' content and graphics.
 
 import os
 import urllib.request
+from urllib.request import urlretrieve
 from bs4 import BeautifulSoup
 # Custumized modules
 from library.card import Card
@@ -22,13 +23,13 @@ def parse_card_info(html):
     soup = BeautifulSoup(html, "html.parser")
     info_data = soup.find('table', class_="status").find_all('tr')
     result.official_image = "http://ws-tcp.com" + info_data[0].find('td', class_="graphic").img['src']
-    result.name = info_data[0].find('td', colspan="3").contents[0]
+    result.name = info_data[0].find('td', colspan="3").contents[0].strip()
     result.id = info_data[1].find('td', class_='cell_2').contents[0]
     result.rarity = info_data[1].find('td', class_='cell_4').contents[0]
     result.expansion = info_data[2].find('td').contents[0]
     result.side = info_data[2].find('img')['src'][-5]
     result.type = info_data[3].find('td').contents[0]
-    result.color = info_data[3].find('img')['src'].split('/')[-1][:-4]
+    result.color = info_data[3].find('img')['src'].split('/')[-1].split('.')[0]
     result.level = info_data[4].find('td').contents[0]
     result.cost = info_data[4].find_all('td')[1].contents[0]
     result.power = info_data[5].find('td').contents[0]
@@ -40,23 +41,25 @@ def parse_card_info(html):
     for t in result.text:
         if not isinstance(t, str):
             result.text.remove(t)
+    for i in range(len(result.text)):
+        result.text[i] = result.text[i].strip()
     return result
 
 def direction_assign(name):
-    result = name
+    result = name.replace('/', '_')
     dir_num = 2
     while os.path.isdir(result):
-        result = result + "_" + str(dir_num)
+        result = name.replace('/', '_') + "_" + str(dir_num)
         dir_num += 1
     os.mkdir(result)
     return result + "/"
 
 def csv_init(path):
-    with open(path + "data.csv", 'w', 'utf-8') as fp
+    with open(path + "data.csv", 'w', encoding="utf-8-sig") as fp:
         fp.write("ID,Title,Description\n")
 
-def print_card(card):
-    with open(path + "data.csv", "a", 'utf-8') as fp
+def print_card(path, card):
+    with open(path + "data.csv", "a") as fp:
         fp.write("{},{},{}\n".format(card.id, card.title(), card.description()))
 
 def downloader(head, start, finish):
@@ -72,7 +75,7 @@ def downloader(head, start, finish):
         except:
             print("Error: Can't find series {}.".format(head))
             break
-        text_page = resp.read()
+        text_page = str(resp.read().decode('utf-8'))
         if text_page.find("expansionAnchor") == -1:
             print("Error: Can't find card {}-{:03}.".format(head, i))
             continue
@@ -80,7 +83,7 @@ def downloader(head, start, finish):
         card = parse_card_info(text_page)
         # Find card image from cardbox.
         # If there's no result, use official image instead
-        filename = "{}{:03}".format(savedir, i)
+        filename = "{}{:03}".format(save_dir, i)
         try:
             image_path = "{}{}{}.jpg".format(graphic_source, card.id.replace('/', '-'), card.rarity)
             urlretrieve(image_path, filename + ".jpg")
@@ -89,7 +92,8 @@ def downloader(head, start, finish):
             urlretrieve(card.official_image, filename + ".gif")
             card.image = filename + ".gif"
         # Print to CSV file
-        print_card(card)
+        print_card(save_dir, card)
+        print("Card {} has been downloaded.".format(card.id))
 
 def main():
     print("\nWelcome to WS card grabber!")
@@ -109,30 +113,5 @@ def main():
     series_finish = int(input(">>> To: "))
     downloader(series_head, series_start, series_finish)
 
-"""
-url = "http://ws-tcg.com/cardlist/?cardno=KC/S25-004"
-resp = urllib.request.urlopen(url)
-html = resp.read()
-card = parse_card_info(html)
-print(card.id)
-print(card.name)
-print(card.rarity)
-print(card.side)
-print(card.expansion)
-print(card.type)
-print(card.color)
-print(card.level)
-print(card.cost)
-print(card.power)
-print(card.soul)
-print(card.trigger)
-print(card.attribute)
-print(card.text)
-print(card.official_image)
-"""
-"""
-soup = BeautifulSoup(html, 'html.parser')
-lines = soup.find('table', class_="status").find_all('tr')
-name = lines[0].find_all('td')[1]
-print(name.contents[0])
-"""
+if __name__ == '__main__':
+    main()
