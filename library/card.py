@@ -21,8 +21,8 @@ class Card:
         self.cost = 0
         self.power = 0
         self.soul = 0
-        self.trigger = False
+        self.trigger = 0
         self.attribute = []
         self.text = ""
-        self.flavor = ""
-        self.illustrator = ""
+        self.official_image = ""
+        self.image = ""
