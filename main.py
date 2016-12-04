@@ -43,11 +43,26 @@ def parse_card_info(html):
     return result
 
 def direction_assign(name):
-    os.mkdir(series_head)
+    result = name
+    dir_num = 2
+    while os.path.isdir(result):
+        result = result + "_" + str(dir_num)
+        dir_num += 1
+    os.mkdir(result)
+    return result + "/"
+
+def csv_init(path):
+    with open(path + "data.csv", 'w', 'utf-8') as fp
+        fp.write("ID,Title,Description\n")
+
+def print_card(card):
+    with open(path + "data.csv", "a", 'utf-8') as fp
+        fp.write("{},{},{}\n".format(card.id, card.title(), card.description()))
 
 def downloader(head, start, finish):
     save_dir = direction_assign(head)
     urllib.request.urlopen(text_source)
+    csv_init(save_dir)
     for i in range(start, finish+1):
         # Try to download the card info, if Html error then break.
         # If no such card ID, find next.
@@ -63,8 +78,18 @@ def downloader(head, start, finish):
             continue
         # Now text_page is a page with card info
         card = parse_card_info(text_page)
-        # Find card image from cardbox. if there's no result, 
-        
+        # Find card image from cardbox.
+        # If there's no result, use official image instead
+        filename = "{}{:03}".format(savedir, i)
+        try:
+            image_path = "{}{}{}.jpg".format(graphic_source, card.id.replace('/', '-'), card.rarity)
+            urlretrieve(image_path, filename + ".jpg")
+            card.image = filename + ".jpg"
+        except:
+            urlretrieve(card.official_image, filename + ".gif")
+            card.image = filename + ".gif"
+        # Print to CSV file
+        print_card(card)
 
 def main():
     print("\nWelcome to WS card grabber!")
